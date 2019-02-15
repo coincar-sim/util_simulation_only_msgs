@@ -32,18 +32,18 @@
 
 namespace util_simulation_only_msgs {
 
-void getInterpolationIndexAndScale(const simulation_only_msgs::DeltaTrajectoryWithID::ConstPtr& deltaTrajectory,
+void getInterpolationIndexAndScale(const simulation_only_msgs::DeltaTrajectoryWithID& deltaTrajectory,
                                    const ros::Time& interpolationTimestamp,
                                    size_t& index,
                                    double& scale,
                                    bool& valid,
                                    std::string& errorMsg) {
 
-    double dtFirst = deltaTrajectory->delta_poses_with_delta_time.front().delta_time.toSec();
+    double dtFirst = deltaTrajectory.delta_poses_with_delta_time.front().delta_time.toSec();
 
-    double dtLast = deltaTrajectory->delta_poses_with_delta_time.back().delta_time.toSec();
+    double dtLast = deltaTrajectory.delta_poses_with_delta_time.back().delta_time.toSec();
 
-    double dtCurrent = interpolationTimestamp.toSec() - deltaTrajectory->header.stamp.toSec();
+    double dtCurrent = interpolationTimestamp.toSec() - deltaTrajectory.header.stamp.toSec();
 
     if (dtCurrent < dtFirst) {
         errorMsg = "interpolationTimestamp out of range: smaller than startTimeDeltaTrajectory; dtCurrent=" +
@@ -56,14 +56,14 @@ void getInterpolationIndexAndScale(const simulation_only_msgs::DeltaTrajectoryWi
         errorMsg = "interpolationTimestamp out of range: larger than startTimeDeltaTrajectory+dtLast; dtCurrent=" +
                    std::to_string(dtCurrent) + ", dtLast=" + std::to_string(dtLast) + ", interpolationTimestamp=" +
                    std::to_string(interpolationTimestamp.toSec()) + ", startTimeDeltaTrajectory" +
-                   std::to_string(deltaTrajectory->header.stamp.toSec());
+                   std::to_string(deltaTrajectory.header.stamp.toSec());
         valid = false;
         return;
     }
 
-    for (size_t i = 0; i < deltaTrajectory->delta_poses_with_delta_time.size() - 1; i++) {
-        double dt0 = deltaTrajectory->delta_poses_with_delta_time[i].delta_time.toSec();
-        double dt1 = deltaTrajectory->delta_poses_with_delta_time[i + 1].delta_time.toSec();
+    for (size_t i = 0; i < deltaTrajectory.delta_poses_with_delta_time.size() - 1; i++) {
+        double dt0 = deltaTrajectory.delta_poses_with_delta_time[i].delta_time.toSec();
+        double dt1 = deltaTrajectory.delta_poses_with_delta_time[i + 1].delta_time.toSec();
 
         if (dt0 <= dtCurrent && dtCurrent <= dt1) {
             scale = double(dtCurrent - dt0) / double(dt1 - dt0);
@@ -101,23 +101,12 @@ void interpolateDeltaPose(const simulation_only_msgs::DeltaTrajectoryWithID::Con
     interpolatedDeltaPose = util_geometry_msgs::computations::interpolateBetweenPoses(p0, p1, scale);
 }
 
-
 bool containsNANs(const simulation_only_msgs::DeltaTrajectoryWithID& dtwid) {
-    for (size_t i = 0; i < dtwid.delta_poses_with_delta_time.size() - 1; i++) {
-        const automated_driving_msgs::DeltaPoseWithDeltaTime& dpwdt = dtwid.delta_poses_with_delta_time[i];
-        if (std::isnan(dpwdt.delta_pose.position.x) || std::isnan(dpwdt.delta_pose.position.y) ||
-            std::isnan(dpwdt.delta_pose.position.z)) {
-            return true;
-        }
-        if (std::isnan(dpwdt.delta_pose.orientation.x) || std::isnan(dpwdt.delta_pose.orientation.y) ||
-            std::isnan(dpwdt.delta_pose.orientation.z) || std::isnan(dpwdt.delta_pose.orientation.w)) {
-            return true;
-        }
-        if (std::isnan(dpwdt.delta_time.toSec())) {
-            return true;
-        }
-    }
-    return false;
+    auto containsNans = [](const auto& dpwdt) {
+        return util_geometry_msgs::checks::containsNANs(dpwdt.delta_pose) || std::isnan(dpwdt.delta_time.toSec());
+    };
+    auto& poses = dtwid.delta_poses_with_delta_time;
+    return std::any_of(std::begin(poses), std::end(poses), containsNans);
 }
 
 } // namespace util_simulation_only_msgs

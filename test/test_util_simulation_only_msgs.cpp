@@ -31,13 +31,14 @@
 #include "gtest/gtest.h"
 
 #include "util_simulation_only_msgs.hpp"
+#include "simulation_only_msgs/AbsoluteTrajectoryWithID.h"
 
 using namespace util_simulation_only_msgs;
 
-class UtilSimulationOnlyMsgs : public ::testing::Test {
+class DeltaTrajectoryWithIDTests : public ::testing::Test {
 
 protected:
-    UtilSimulationOnlyMsgs() {
+    DeltaTrajectoryWithIDTests() {
         deltaTrajectoryWithID_.header.frame_id = "";
         deltaTrajectoryWithID_.header.stamp.fromSec(50.);
 
@@ -62,13 +63,16 @@ protected:
     simulation_only_msgs::DeltaTrajectoryWithID deltaTrajectoryWithID_;
 };
 
-TEST_F(UtilSimulationOnlyMsgs, NANcheck) {
+TEST_F(DeltaTrajectoryWithIDTests, NANcheck) {
     EXPECT_FALSE(containsNANs(deltaTrajectoryWithID_));
     deltaTrajectoryWithID_.delta_poses_with_delta_time.at(0).delta_pose.position.x = NAN;
     EXPECT_TRUE(containsNANs(deltaTrajectoryWithID_));
+    simulation_only_msgs::DeltaTrajectoryWithID::ConstPtr deltaTrajectoryWithIDPtr(
+        new simulation_only_msgs::DeltaTrajectoryWithID(deltaTrajectoryWithID_));
+    EXPECT_TRUE(containsNANs(deltaTrajectoryWithIDPtr));
 }
 
-TEST_F(UtilSimulationOnlyMsgs, interpolate) {
+TEST_F(DeltaTrajectoryWithIDTests, interpolate) {
     geometry_msgs::Pose pose;
     bool valid;
     std::string errorMsg;
@@ -90,8 +94,86 @@ TEST_F(UtilSimulationOnlyMsgs, interpolate) {
 
     valid = true;
     deltaTrajectoryWithID_.delta_poses_with_delta_time.at(0).delta_pose.position.x = NAN;
-    simulation_only_msgs::DeltaTrajectoryWithID::ConstPtr deltaTrajectoryWithIDPtr2(
-        new simulation_only_msgs::DeltaTrajectoryWithID(deltaTrajectoryWithID_));
-    interpolateDeltaPose(deltaTrajectoryWithIDPtr2, possibleTimeStamp, pose, valid, errorMsg);
+    interpolateDeltaPose(deltaTrajectoryWithID_, possibleTimeStamp, pose, valid, errorMsg);
+    EXPECT_FALSE(valid);
+}
+
+TEST_F(DeltaTrajectoryWithIDTests, interpolationIndexAndScale) {
+    geometry_msgs::Pose pose;
+    bool valid{false};
+    std::string errorMsg;
+    ros::Time possibleTimeStamp;
+    possibleTimeStamp.fromSec(55.);
+
+    size_t index{100};
+    double scale{-1};
+
+    getInterpolationIndexAndScale(deltaTrajectoryWithID_, possibleTimeStamp, index, scale, valid, errorMsg);
+
+    EXPECT_TRUE(valid);
+    EXPECT_DOUBLE_EQ(0.5, scale);
+    EXPECT_EQ(0, index);
+}
+
+class AbsoluteTrajectoryTests : public ::testing::Test {
+
+protected:
+    AbsoluteTrajectoryTests() {
+        absoluteTrajectoryWithID_.header.frame_id = "";
+        absoluteTrajectoryWithID_.header.stamp.fromSec(50.);
+
+        geometry_msgs::PoseStamped pose;
+        pose.header.stamp.fromSec(50.);
+        pose.pose.position.x = 0;
+        pose.pose.position.y = 0;
+        pose.pose.position.z = 0;
+        pose.pose.orientation.x = 0;
+        pose.pose.orientation.y = 0;
+        pose.pose.orientation.z = 0;
+        pose.pose.orientation.w = 1;
+
+        absoluteTrajectoryWithID_.poses.push_back(pose);
+
+        pose.header.stamp.fromSec(60.);
+        pose.pose.position.x = 10.;
+
+        absoluteTrajectoryWithID_.poses.push_back(pose);
+    }
+
+    simulation_only_msgs::AbsoluteTrajectoryWithID absoluteTrajectoryWithID_;
+};
+
+TEST_F(AbsoluteTrajectoryTests, NANcheck) {
+    EXPECT_FALSE(containsNANs(absoluteTrajectoryWithID_));
+    absoluteTrajectoryWithID_.poses[0].pose.position.x = NAN;
+    EXPECT_TRUE(containsNANs(absoluteTrajectoryWithID_));
+    simulation_only_msgs::AbsoluteTrajectoryWithID::ConstPtr absoluteTrajectoryWithIDPtr_(
+        new simulation_only_msgs::AbsoluteTrajectoryWithID(absoluteTrajectoryWithID_));
+    EXPECT_TRUE(containsNANs(absoluteTrajectoryWithIDPtr_));
+}
+
+TEST_F(AbsoluteTrajectoryTests, interpolate) {
+    geometry_msgs::Pose pose;
+    bool valid;
+    std::string errorMsg;
+    ros::Time possibleTimeStamp;
+    possibleTimeStamp.fromSec(55.);
+
+    ros::Time impossibleTimeStamp;
+    impossibleTimeStamp.fromSec(65.);
+
+    simulation_only_msgs::AbsoluteTrajectoryWithID::ConstPtr absoluteTrajectoryWithIDPtr_(
+        new simulation_only_msgs::AbsoluteTrajectoryWithID(absoluteTrajectoryWithID_));
+
+    interpolatePose(absoluteTrajectoryWithID_, possibleTimeStamp, pose, valid, errorMsg);
+    EXPECT_TRUE(valid);
+    EXPECT_DOUBLE_EQ(5., pose.position.x);
+
+    interpolatePose(absoluteTrajectoryWithID_, impossibleTimeStamp, pose, valid, errorMsg);
+    EXPECT_FALSE(valid);
+
+    valid = true;
+    absoluteTrajectoryWithID_.poses[0].pose.position.x = NAN;
+    interpolatePose(absoluteTrajectoryWithID_, possibleTimeStamp, pose, valid, errorMsg);
     EXPECT_FALSE(valid);
 }
