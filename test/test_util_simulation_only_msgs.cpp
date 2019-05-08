@@ -113,6 +113,14 @@ TEST_F(DeltaTrajectoryWithIDTests, interpolationIndexAndScale) {
     EXPECT_TRUE(valid);
     EXPECT_DOUBLE_EQ(0.5, scale);
     EXPECT_EQ(0, index);
+
+    // two poses with equal timestamps
+    deltaTrajectoryWithID_.delta_poses_with_delta_time[1].delta_time.fromSec(0.);
+    possibleTimeStamp.fromSec(50.);
+    getInterpolationIndexAndScale(deltaTrajectoryWithID_, possibleTimeStamp, index, scale, valid, errorMsg);
+    EXPECT_TRUE(valid);
+    EXPECT_DOUBLE_EQ(0.5, scale);
+    EXPECT_EQ(0, index);
 }
 
 class AbsoluteTrajectoryTests : public ::testing::Test {
