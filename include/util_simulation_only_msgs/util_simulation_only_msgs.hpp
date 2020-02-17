@@ -81,7 +81,7 @@ void getInterpolationIndexAndScale(const TrajectoryMessageType& trajectoryMsg,
 
         if (t0 <= tCurrent && tCurrent <= t1) {
             double dtStep = t1 - t0;
-            if(std::fabs(dtStep) < 1e-9) {
+            if (std::fabs(dtStep) < 1e-9) {
                 // dt zero or very low -> do not divide by this and use scale=0.5 as compromise
                 scale = 0.5;
             } else {
