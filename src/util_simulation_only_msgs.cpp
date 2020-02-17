@@ -39,6 +39,12 @@ void getInterpolationIndexAndScale(const simulation_only_msgs::DeltaTrajectoryWi
                                    bool& valid,
                                    std::string& errorMsg) {
 
+    if (deltaTrajectory.delta_poses_with_delta_time.size() < 2) {
+        errorMsg = "deltaTrajectory message contains less than 2 delta poses";
+        valid = false;
+        return;
+    }
+
     double dtFirst = deltaTrajectory.delta_poses_with_delta_time.front().delta_time.toSec();
 
     double dtLast = deltaTrajectory.delta_poses_with_delta_time.back().delta_time.toSec();

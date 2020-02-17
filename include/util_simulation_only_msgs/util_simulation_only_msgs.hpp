@@ -51,6 +51,13 @@ void getInterpolationIndexAndScale(const TrajectoryMessageType& trajectoryMsg,
                                    double& scale,
                                    bool& valid,
                                    std::string& errorMsg) {
+
+    if (trajectoryMsg.poses.size() < 2) {
+        errorMsg = "Trajectory contains less than 2 poses";
+        valid = false;
+        return;
+    }
+
     const geometry_msgs::PoseStamped& poseFirst = trajectoryMsg.poses.front();
     double tFirst = poseFirst.header.stamp.toSec();
 
