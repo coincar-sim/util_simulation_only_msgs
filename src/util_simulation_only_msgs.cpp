@@ -54,9 +54,9 @@ void getInterpolationIndexAndScale(const simulation_only_msgs::DeltaTrajectoryWi
 
     if (dtCurrent > dtLast) {
         errorMsg = "interpolationTimestamp out of range: larger than startTimeDeltaTrajectory+dtLast; dtCurrent=" +
-                   std::to_string(dtCurrent) + ", dtLast=" + std::to_string(dtLast) + ", interpolationTimestamp=" +
-                   std::to_string(interpolationTimestamp.toSec()) + ", startTimeDeltaTrajectory" +
-                   std::to_string(deltaTrajectory.header.stamp.toSec());
+                   std::to_string(dtCurrent) + ", dtLast=" + std::to_string(dtLast) +
+                   ", interpolationTimestamp=" + std::to_string(interpolationTimestamp.toSec()) +
+                   ", startTimeDeltaTrajectory" + std::to_string(deltaTrajectory.header.stamp.toSec());
         valid = false;
         return;
     }
@@ -66,7 +66,14 @@ void getInterpolationIndexAndScale(const simulation_only_msgs::DeltaTrajectoryWi
         double dt1 = deltaTrajectory.delta_poses_with_delta_time[i + 1].delta_time.toSec();
 
         if (dt0 <= dtCurrent && dtCurrent <= dt1) {
-            scale = double(dtCurrent - dt0) / double(dt1 - dt0);
+            double dtStep = dt1 - dt0;
+
+            if (std::fabs(dtStep) < 1e-9) {
+                // dt zero or very low -> do not divide by this and use scale=0.5 as compromise
+                scale = 0.5;
+            } else {
+                scale = double(dtCurrent - dt0) / dtStep;
+            }
             index = i;
             valid = true;
             return;
