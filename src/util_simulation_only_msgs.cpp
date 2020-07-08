@@ -30,6 +30,7 @@
 
 #include "util_simulation_only_msgs.hpp"
 
+
 namespace util_simulation_only_msgs {
 
 void getInterpolationIndexAndScale(const simulation_only_msgs::DeltaTrajectoryWithID& deltaTrajectory,
@@ -93,8 +94,8 @@ void interpolateDeltaPose(const simulation_only_msgs::DeltaTrajectoryWithID::Con
                           bool& valid,
                           std::string& errorMsg) {
 
-    size_t index;
-    double scale;
+    size_t index = 0;
+    double scale = 0.;
 
     getInterpolationIndexAndScale(deltaTrajectory, interpolationTimestamp, index, scale, valid, errorMsg);
 
@@ -118,7 +119,7 @@ bool containsNANs(const simulation_only_msgs::DeltaTrajectoryWithID& dtwid) {
     auto containsNans = [](const auto& dpwdt) {
         return util_geometry_msgs::checks::containsNANs(dpwdt.delta_pose) || std::isnan(dpwdt.delta_time.toSec());
     };
-    auto& poses = dtwid.delta_poses_with_delta_time;
+    const auto& poses = dtwid.delta_poses_with_delta_time;
     return std::any_of(std::begin(poses), std::end(poses), containsNans);
 }
 

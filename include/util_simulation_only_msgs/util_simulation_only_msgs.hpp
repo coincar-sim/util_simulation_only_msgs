@@ -35,6 +35,7 @@
 
 #include <boost/make_shared.hpp>
 
+
 namespace util_simulation_only_msgs {
 
 void getInterpolationIndexAndScale(const simulation_only_msgs::DeltaTrajectoryWithID& deltaTrajectory,
@@ -109,7 +110,7 @@ void getInterpolationIndexAndScale(const typename boost::shared_ptr<TrajectoryMe
                                    double& scale,
                                    bool& valid,
                                    std::string& errorMsg) {
-    getInterpolationIndexAndScale(*trajectoryMsgPtr.get(), interpolationTimestamp, index, scale, valid, errorMsg);
+    getInterpolationIndexAndScale(*trajectoryMsgPtr, interpolationTimestamp, index, scale, valid, errorMsg);
 }
 
 void interpolateDeltaPose(const simulation_only_msgs::DeltaTrajectoryWithID::ConstPtr& deltaTrajectory,
@@ -134,8 +135,8 @@ void interpolatePose(const TrajectoryMessageType& trajectoryMsg,
                      geometry_msgs::Pose& interpolatedPose,
                      bool& valid,
                      std::string& errorMsg) {
-    size_t index;
-    double scale;
+    size_t index = 0;
+    double scale = 0.;
 
     getInterpolationIndexAndScale(trajectoryMsg, interpolationTimestamp, index, scale, valid, errorMsg);
 
@@ -178,7 +179,7 @@ bool containsNANs(const simulation_only_msgs::DeltaTrajectoryWithID& dtwid);
 
 template <typename TrajectoryMessageType>
 bool containsNANs(const typename boost::shared_ptr<TrajectoryMessageType const>& trajectoryMsgPtr) {
-    return containsNANs(*trajectoryMsgPtr.get());
+    return containsNANs(*trajectoryMsgPtr);
 }
 
 
