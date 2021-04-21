@@ -1,11 +1,11 @@
-<?xml version="1.0"?>
+<?xml version='1.0' encoding='utf-8'?>
 <package format="2">
   <name>util_simulation_only_msgs</name>
   <version>1.0.0</version>
   <description>Util for simulation_only_msgs</description>
 
   <license>BSD</license>
-  <maintainer email="maximilian.naumann@kit.edu">Maximilian Naumann</maintainer>
+  <maintainer email="eduardo.molinos@kit.edu">Eduardo Molinos</maintainer>
   <author email="maximilian.naumann@kit.edu">Maximilian Naumann</author>
 
   <buildtool_depend>catkin</buildtool_depend>
